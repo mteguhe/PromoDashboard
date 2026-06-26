@@ -11,8 +11,8 @@ CREATE TABLE IF NOT EXISTS flight_promos (
     source_platform VARCHAR(50),
     source_url TEXT UNIQUE,
     expired_date DATE,
-    created_at TIMESTAMP DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-    scraped_at TIMESTAMP DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    created_at TIMESTAMP DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+    scraped_at TIMESTAMP DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 
 CREATE TABLE IF NOT EXISTS food_promos (
@@ -29,8 +29,8 @@ CREATE TABLE IF NOT EXISTS food_promos (
     source_platform VARCHAR(50),
     source_url TEXT UNIQUE,
     expired_date DATE,
-    created_at TIMESTAMP DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-    scraped_at TIMESTAMP DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    created_at TIMESTAMP DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+    scraped_at TIMESTAMP DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_flight_promos_created_at ON flight_promos(created_at);

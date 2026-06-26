@@ -13,7 +13,8 @@ class DatabaseManager:
         self.close()
 
     def insert_flight_promo(self, data):
-        data = data or {}
+        if not isinstance(data, dict):
+            data = {}
         cursor = self.conn.cursor()
         query = """
         INSERT OR IGNORE INTO flight_promos (
@@ -40,7 +41,8 @@ class DatabaseManager:
         self.conn.commit()
 
     def insert_food_promo(self, data):
-        data = data or {}
+        if not isinstance(data, dict):
+            data = {}
         cursor = self.conn.cursor()
         query = """
         INSERT OR IGNORE INTO food_promos (

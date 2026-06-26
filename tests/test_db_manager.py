@@ -129,14 +129,16 @@ def test_scraped_at_timezone_aware(db_manager, tmp_path):
     
     assert created_at_str.endswith("Z")
     assert "T" in created_at_str
-    assert len(created_at_str) == 24  # SQLite strftime('%Y-%m-%dT%H:%M:%fZ') yields milliseconds e.g. 24 chars
-
+    assert len(created_at_str) == 20
 
 def test_defensive_data_check(db_manager):
-    # None or empty dict should not crash the insert methods
+    # None, empty dict, or non-dict types should not crash the insert methods
     db_manager.insert_flight_promo(None)
     db_manager.insert_food_promo(None)
     db_manager.insert_flight_promo({})
     db_manager.insert_food_promo({})
+    db_manager.insert_flight_promo([1, 2, 3])
+    db_manager.insert_food_promo([1, 2, 3])
+
 
 
