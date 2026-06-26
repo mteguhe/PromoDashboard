@@ -39,6 +39,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin: 0;
 }
 
 .badge-scraper {
@@ -162,4 +163,85 @@ body {
   color: var(--primary);
   text-decoration: none;
   font-weight: bold;
+}
+
+/* Card quality enhancements: classes extracted from inline styles */
+.card-source {
+  font-size: 0.8em;
+  color: var(--text-muted);
+  font-weight: bold;
+}
+
+.card-expiry {
+  font-size: 0.75em;
+  background: var(--accent);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.card-brand {
+  font-size: 0.8em;
+  text-transform: uppercase;
+  color: var(--primary);
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.card-title {
+  margin: 0 0 10px 0;
+  font-size: 1.1em;
+  color: #fff;
+  line-height: 1.3;
+}
+
+.card-desc {
+  font-size: 0.9em;
+  color: var(--text-muted);
+  margin: 0 0 10px 0;
+}
+
+.card-no-code {
+  font-size: 0.8em;
+  color: var(--text-muted);
+  margin-top: 15px;
+}
+
+.card-terms {
+  margin-top: 10px;
+  font-size: 0.8em;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+
+.card-footer-detail {
+  color: var(--text-muted);
+}
+
+/* Error state styling */
+.error-container {
+  text-align: center;
+  padding: 40px;
+  color: var(--accent);
+  background: rgba(255, 87, 34, 0.05);
+  border: 1px dashed var(--accent);
+  border-radius: 8px;
+  margin-bottom: 25px;
+}
+
+.btn-retry {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 15px;
+  transition: opacity 0.2s;
+}
+
+.btn-retry:hover {
+  opacity: 0.9;
 }

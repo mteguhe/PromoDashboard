@@ -1,24 +1,40 @@
 'use client';
 import { useState, useEffect } from 'react';
 import PromoCard from '@/components/PromoCard';
-import '@/app/globals.css';
 
 export default function Home() {
   const [category, setCategory] = useState('flight'); // flight atau food
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [promos, setPromos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Debouncing search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const fetchPromos = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const res = await fetch(`/api/promos?category=${category}&search=${encodeURIComponent(search)}`);
+      const res = await fetch(`/api/promos?category=${category}&search=${encodeURIComponent(debouncedSearch)}`);
+      if (!res.ok) {
+        throw new Error(`HTTP Error: ${res.status}`);
+      }
       const result = await res.json();
       if (result.success) {
         setPromos(result.data);
+      } else {
+        setError(result.error || 'Gagal memuat promo.');
       }
     } catch (err) {
       console.error(err);
+      setError('Terjadi kesalahan koneksi saat memuat promo. Silakan coba kembali.');
     } finally {
       setLoading(false);
     }
@@ -26,13 +42,13 @@ export default function Home() {
 
   useEffect(() => {
     fetchPromos();
-  }, [category, search]);
+  }, [category, debouncedSearch]);
 
   return (
     <div className="container">
       {/* Header */}
       <header className="header">
-        <div className="title-logo">🎟 PromoPortal</div>
+        <h1 className="title-logo">🎟 PromoPortal</h1>
         <div>
           <span className="badge-scraper">Sync: 8:00 & 15:00 WIB</span>
         </div>
@@ -64,7 +80,12 @@ export default function Home() {
       />
 
       {/* Promo List */}
-      {loading ? (
+      {error ? (
+        <div className="error-container">
+          <p>{error}</p>
+          <button className="btn-retry" onClick={fetchPromos}>Coba Lagi</button>
+        </div>
+      ) : loading ? (
         <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
           Sedang memuat promo terbaik...
         </div>

@@ -1,3 +1,5 @@
+import '@/app/globals.css';
+
 export const metadata = {
   title: 'Portal Promo Tiket & Makanan',
   description: 'Temukan promo tiket pesawat dan makanan terbaru dari berbagai media sosial dan berita.',
