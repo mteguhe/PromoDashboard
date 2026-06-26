@@ -13,6 +13,7 @@ class DatabaseManager:
         self.close()
 
     def insert_flight_promo(self, data):
+        data = data or {}
         cursor = self.conn.cursor()
         query = """
         INSERT OR IGNORE INTO flight_promos (
@@ -21,7 +22,7 @@ class DatabaseManager:
             source_platform, source_url, expired_date, scraped_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
         cursor.execute(query, (
             data.get("title"),
             data.get("description"),
@@ -39,6 +40,7 @@ class DatabaseManager:
         self.conn.commit()
 
     def insert_food_promo(self, data):
+        data = data or {}
         cursor = self.conn.cursor()
         query = """
         INSERT OR IGNORE INTO food_promos (
@@ -47,7 +49,7 @@ class DatabaseManager:
             source_platform, source_url, expired_date, scraped_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
         cursor.execute(query, (
             data.get("title"),
             data.get("description"),
@@ -68,4 +70,6 @@ class DatabaseManager:
     def close(self):
         if self.conn:
             self.conn.close()
+            self.conn = None
+
 

@@ -105,9 +105,8 @@ def test_db_manager_context_manager(tmp_path):
         }
         mgr.insert_flight_promo(promo_data)
         
-    # Verify we can no longer query using that connection or that the connection is closed
-    with pytest.raises(sqlite3.ProgrammingError):
-        mgr.conn.cursor()
+    # Verify that the connection is reset to None
+    assert mgr.conn is None
 
 def test_scraped_at_timezone_aware(db_manager, tmp_path):
     promo_data = {
@@ -119,10 +118,25 @@ def test_scraped_at_timezone_aware(db_manager, tmp_path):
     db_file = tmp_path / DB_FILE
     conn = sqlite3.connect(str(db_file))
     cursor = conn.cursor()
-    cursor.execute("SELECT scraped_at FROM flight_promos WHERE source_url=?", (promo_data["source_url"],))
-    scraped_at_str = cursor.fetchone()[0]
+    cursor.execute("SELECT scraped_at, created_at FROM flight_promos WHERE source_url=?", (promo_data["source_url"],))
+    scraped_at_str, created_at_str = cursor.fetchone()
     conn.close()
     
-    # Verify it is in ISO format and contains timezone offset / indicator (+00:00 or Z)
-    assert "+00:00" in scraped_at_str or scraped_at_str.endswith("Z")
+    # Verify both columns follow YYYY-MM-DDTHH:MM:SSZ format (ending with Z, contains T)
+    assert scraped_at_str.endswith("Z")
+    assert "T" in scraped_at_str
+    assert len(scraped_at_str) == 20  # e.g., '2026-06-26T15:27:47Z'
+    
+    assert created_at_str.endswith("Z")
+    assert "T" in created_at_str
+    assert len(created_at_str) == 24  # SQLite strftime('%Y-%m-%dT%H:%M:%fZ') yields milliseconds e.g. 24 chars
+
+
+def test_defensive_data_check(db_manager):
+    # None or empty dict should not crash the insert methods
+    db_manager.insert_flight_promo(None)
+    db_manager.insert_food_promo(None)
+    db_manager.insert_flight_promo({})
+    db_manager.insert_food_promo({})
+
 
