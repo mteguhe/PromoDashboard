@@ -8,6 +8,12 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category') || 'flight'; // flight atau food
+    if (category !== 'flight' && category !== 'food') {
+      return NextResponse.json(
+        { success: false, error: 'Invalid category. Must be flight or food.' },
+        { status: 400 }
+      );
+    }
     const search = searchParams.get('search') || '';
     
     const db = await getDbConnection();
