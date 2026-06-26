@@ -26,18 +26,22 @@ def parse_promo_text(text, category="flight"):
             }
 
     # Regex patterns
-    # Using case-insensitive keyword prefix, but case-sensitive matching for the uppercase/digit/special promo code
-    code_pattern = re.search(r'(?i:KODE\s+PROMO|KODE|PROMO|CODE)\s*:?\s*([A-Z0-9_-]+)', text)
-    discount_pattern = re.search(r'(\d+%\s*(?:diskon|potongan)?|diskon\s*\d+%|(?:potongan|diskon)\s*(?:Rp\s*\d+[\d.,]*|\d+[\d.,]*\s*ribu))', text, re.IGNORECASE)
+    # Tighten code_pattern to enforce a colon for single-word prefix matches (like KODE/PROMO/CODE)
+    # while leaving it optional for multi-word matches (like KODE PROMO).
+    code_pattern = re.search(r"(?:(?i:KODE\s+PROMO|PROMO\s+CODE|PROMO_CODE)\s*:?\s*|(?i:KODE|PROMO|CODE)\s*:\s*)\b([A-Z0-9_-]+)\b", text)
+    
+    # Support intermediate filler words in discount_pattern
+    discount_pattern = re.search(r"(\d+%\s*(?:diskon|potongan)?|diskon\s*(?:hingga|s\.?d\.?|up\s*to|sampai)?\s*\d+%|(?:potongan|diskon)\s*(?:hingga|s\.?d\.?|up\s*to|sampai)?\s*(?:Rp\s*\d+[\d.,]*|\d+[\d.,]*\s*ribu))", text, re.IGNORECASE)
+    
     date_pattern = re.search(r'(\d{4}-\d{2}-\d{2})', text)
     
     promo_code = code_pattern.group(1).strip() if code_pattern else None
     
     discount_value = discount_pattern.group(1).strip() if discount_pattern else None
     if discount_value:
-        # Clean up prefix/suffix like "diskon" or "potongan"
-        discount_value = re.sub(r'(diskon|potongan)\s*', '', discount_value, flags=re.IGNORECASE)
-        discount_value = re.sub(r'\s*(diskon|potongan)', '', discount_value, flags=re.IGNORECASE).strip()
+        # Strip out keywords and filler words from the extracted discount
+        discount_value = re.sub(r"(?i)(?:diskon|potongan|hingga|s\.?d\.?|up\s*to|sampai)\s*", "", discount_value)
+        discount_value = re.sub(r"(?i)\s*(?:diskon|potongan|hingga|s\.?d\.?|up\s*to|sampai)", "", discount_value).strip()
     
     expired_date = date_pattern.group(1).strip() if date_pattern else None
     

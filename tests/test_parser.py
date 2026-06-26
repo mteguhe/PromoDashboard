@@ -56,3 +56,10 @@ def test_parse_safety_guard():
     # Test empty string
     res3 = parse_promo_text("", category="flight")
     assert res3["promo_code"] is None
+
+def test_parse_promo_code_false_positive():
+    text = "Promo Liburan Sekolah! Dapatkan diskon hingga Rp 100.000 untuk tiket Citilink."
+    result = parse_promo_text(text, category="flight")
+    
+    assert result["promo_code"] is None
+    assert result["discount_value"] == "Rp 100.000"
