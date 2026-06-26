@@ -1,10 +1,34 @@
 import re
 
 def parse_promo_text(text, category="flight"):
+    # Safety guard check
+    if not text or not isinstance(text, str):
+        if category == "flight":
+            return {
+                "promo_code": None,
+                "discount_value": None,
+                "expired_date": None,
+                "terms_and_conditions": "",
+                "airline": "Unknown Airline",
+                "origin_city": "Jakarta",
+                "destination_city": "Bali"
+            }
+        else:
+            return {
+                "promo_code": None,
+                "discount_value": None,
+                "expired_date": None,
+                "terms_and_conditions": "",
+                "brand_name": "Unknown Brand",
+                "category": "F&B",
+                "min_transaction": None,
+                "locations": "Nasional"
+            }
+
     # Regex patterns
-    # Using case-insensitive keyword prefix, but case-sensitive matching for the uppercase/digit promo code
-    code_pattern = re.search(r'(?i:KODE\s+PROMO|KODE|PROMO|CODE)\s*:?\s*([A-Z0-9]+)', text)
-    discount_pattern = re.search(r'(\d+%\s*(?:diskon|potongan)?|diskon\s*\d+%|potongan\s*(?:Rp\s*\d+[\d.,]*|\d+[\d.,]*\s*ribu))', text, re.IGNORECASE)
+    # Using case-insensitive keyword prefix, but case-sensitive matching for the uppercase/digit/special promo code
+    code_pattern = re.search(r'(?i:KODE\s+PROMO|KODE|PROMO|CODE)\s*:?\s*([A-Z0-9_-]+)', text)
+    discount_pattern = re.search(r'(\d+%\s*(?:diskon|potongan)?|diskon\s*\d+%|(?:potongan|diskon)\s*(?:Rp\s*\d+[\d.,]*|\d+[\d.,]*\s*ribu))', text, re.IGNORECASE)
     date_pattern = re.search(r'(\d{4}-\d{2}-\d{2})', text)
     
     promo_code = code_pattern.group(1).strip() if code_pattern else None
