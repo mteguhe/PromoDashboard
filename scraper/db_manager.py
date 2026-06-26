@@ -1,10 +1,16 @@
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 
 class DatabaseManager:
     def __init__(self, db_path="promo.db"):
-        self.conn = sqlite3.connect(db_path)
+        self.conn = sqlite3.connect(db_path, timeout=30.0)
         self.conn.row_factory = sqlite3.Row
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     def insert_flight_promo(self, data):
         cursor = self.conn.cursor()
@@ -15,7 +21,7 @@ class DatabaseManager:
             source_platform, source_url, expired_date, scraped_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
-        now = datetime.now().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         cursor.execute(query, (
             data.get("title"),
             data.get("description"),
@@ -41,7 +47,7 @@ class DatabaseManager:
             source_platform, source_url, expired_date, scraped_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
-        now = datetime.now().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         cursor.execute(query, (
             data.get("title"),
             data.get("description"),
@@ -62,3 +68,4 @@ class DatabaseManager:
     def close(self):
         if self.conn:
             self.conn.close()
+

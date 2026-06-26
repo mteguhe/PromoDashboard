@@ -92,3 +92,37 @@ def test_insert_food_promo(db_manager, tmp_path):
     count = cursor.fetchone()[0]
     assert count == 1
     conn.close()
+
+def test_db_manager_context_manager(tmp_path):
+    db_file = tmp_path / DB_FILE
+    init_database(str(db_file))
+    
+    with DatabaseManager(str(db_file)) as mgr:
+        assert mgr.conn is not None
+        promo_data = {
+            "title": "Promo Context Manager",
+            "source_url": "https://promo.com/context-manager"
+        }
+        mgr.insert_flight_promo(promo_data)
+        
+    # Verify we can no longer query using that connection or that the connection is closed
+    with pytest.raises(sqlite3.ProgrammingError):
+        mgr.conn.cursor()
+
+def test_scraped_at_timezone_aware(db_manager, tmp_path):
+    promo_data = {
+        "title": "Promo TZ Check",
+        "source_url": "https://promo.com/tz-check"
+    }
+    db_manager.insert_flight_promo(promo_data)
+    
+    db_file = tmp_path / DB_FILE
+    conn = sqlite3.connect(str(db_file))
+    cursor = conn.cursor()
+    cursor.execute("SELECT scraped_at FROM flight_promos WHERE source_url=?", (promo_data["source_url"],))
+    scraped_at_str = cursor.fetchone()[0]
+    conn.close()
+    
+    # Verify it is in ISO format and contains timezone offset / indicator (+00:00 or Z)
+    assert "+00:00" in scraped_at_str or scraped_at_str.endswith("Z")
+
