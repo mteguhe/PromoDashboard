@@ -63,3 +63,22 @@ def test_parse_promo_code_false_positive():
     
     assert result["promo_code"] is None
     assert result["discount_value"] == "Rp 100.000"
+
+def test_parse_lowercase_promo_code():
+    text1 = "Dapatkan diskon 50% dengan kode promo KfcFeast."
+    res1 = parse_promo_text(text1, category="food")
+    assert res1["promo_code"] == "KfcFeast"
+    
+    text2 = "Gunakan PROMO CODE: airasia-school untuk potongan Rp 50 ribu."
+    res2 = parse_promo_text(text2, category="flight")
+    assert res2["promo_code"] == "airasia-school"
+    assert res2["discount_value"] == "Rp 50 ribu"
+
+def test_parse_rupiah_slang_discounts():
+    text1 = "Dapatkan potongan Rp 50 rb untuk tiket Citilink."
+    res1 = parse_promo_text(text1, category="flight")
+    assert res1["discount_value"] == "Rp 50 rb"
+    
+    text2 = "Nikmati diskon Rp 100 ribu di Starbucks."
+    res2 = parse_promo_text(text2, category="food")
+    assert res2["discount_value"] == "Rp 100 ribu"

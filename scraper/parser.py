@@ -27,11 +27,18 @@ def parse_promo_text(text, category="flight"):
 
     # Regex patterns
     # Tighten code_pattern to enforce a colon for single-word prefix matches (like KODE/PROMO/CODE)
-    # while leaving it optional for multi-word matches (like KODE PROMO).
-    code_pattern = re.search(r"(?:(?i:KODE\s+PROMO|PROMO\s+CODE|PROMO_CODE)\s*:?\s*|(?i:KODE|PROMO|CODE)\s*:\s*)\b([A-Z0-9_-]+)\b", text)
+    # while leaving it optional for multi-word matches (like KODE PROMO). Supports case-insensitive/mixed-case codes.
+    code_pattern = re.search(
+        r"(?:(?i:KODE\s+PROMO|PROMO\s+CODE|PROMO_CODE)\s*:?\s*|(?i:KODE|PROMO|CODE)\s*:\s*)\b([A-Za-z0-9_-]+)\b",
+        text
+    )
     
-    # Support intermediate filler words in discount_pattern
-    discount_pattern = re.search(r"(\d+%\s*(?:diskon|potongan)?|diskon\s*(?:hingga|s\.?d\.?|up\s*to|sampai)?\s*\d+%|(?:potongan|diskon)\s*(?:hingga|s\.?d\.?|up\s*to|sampai)?\s*(?:Rp\s*\d+[\d.,]*|\d+[\d.,]*\s*ribu))", text, re.IGNORECASE)
+    # Support intermediate filler words and rupiah slang (ribu/rb) in discount_pattern
+    discount_pattern = re.search(
+        r"(\d+%\s*(?:diskon|potongan)?|diskon\s*(?:hingga|s\.?d\.?|up\s*to|sampai)?\s*\d+%|(?:potongan|diskon)\s*(?:hingga|s\.?d\.?|up\s*to|sampai)?\s*(?:Rp\s*\d+[\d.,]*(?:\s*(?:ribu|rb))?|\d+[\d.,]*\s*(?:ribu|rb)))",
+        text,
+        re.IGNORECASE
+    )
     
     date_pattern = re.search(r'(\d{4}-\d{2}-\d{2})', text)
     
