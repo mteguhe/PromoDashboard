@@ -33,24 +33,28 @@ def parse_promo_text(text, category="flight"):
         text
     )
     
-    # Support intermediate filler words and rupiah slang (ribu/rb) in discount_pattern
+    # Support intermediate filler words, Rp. with period, K slang, and cashback/cb/hemat in discount_pattern
     discount_pattern = re.search(
-        r"(\d+%\s*(?:diskon|potongan)?|diskon\s*(?:hingga|s\.?d\.?|up\s*to|sampai)?\s*\d+%|(?:potongan|diskon)\s*(?:hingga|s\.?d\.?|up\s*to|sampai)?\s*(?:Rp\s*\d+[\d.,]*(?:\s*(?:ribu|rb))?|\d+[\d.,]*\s*(?:ribu|rb)))",
+        r"(\d+%\s*(?:diskon|potongan|hemat)?|diskon\s*(?:hingga|s\.?d\.?|up\s*to|sampai)?\s*\d+%|(?:potongan|diskon|hemat|cashback|cb)\s*(?:hingga|s\.?d\.?|up\s*to|sampai)?\s*(?:Rp\.?\s*\d+[\d.,]*(?:\s*(?:ribu|rb|k))?|\d+[\d.,]*\s*(?:ribu|rb|k)))",
         text,
         re.IGNORECASE
     )
     
-    date_pattern = re.search(r'(\d{4}-\d{2}-\d{2})', text)
+    # Contextual Expiry Date Extraction
+    date_match = re.search(r'(?:hingga|s\.?d\.?|sampai|berlaku|expired|exp)\s*(?:tanggal\s*)?(\d{4}-\d{2}-\d{2})', text, re.IGNORECASE)
+    if not date_match:
+        date_match = re.search(r'(\d{4}-\d{2}-\d{2})', text)
+    expired_date = date_match.group(1).strip() if date_match else None
     
     promo_code = code_pattern.group(1).strip() if code_pattern else None
     
     discount_value = discount_pattern.group(1).strip() if discount_pattern else None
     if discount_value:
         # Strip out keywords and filler words from the extracted discount
-        discount_value = re.sub(r"(?i)(?:diskon|potongan|hingga|s\.?d\.?|up\s*to|sampai)\s*", "", discount_value)
-        discount_value = re.sub(r"(?i)\s*(?:diskon|potongan|hingga|s\.?d\.?|up\s*to|sampai)", "", discount_value).strip()
-    
-    expired_date = date_pattern.group(1).strip() if date_pattern else None
+        discount_value = re.sub(r"(?i)(?:diskon|potongan|hemat|cashback|cb|hingga|s\.?d\.?|up\s*to|sampai)\s*", "", discount_value)
+        discount_value = re.sub(r"(?i)\s*(?:diskon|potongan|hemat|cashback|cb|hingga|s\.?d\.?|up\s*to|sampai)", "", discount_value)
+        # Strip Rp. (with optional period)
+        discount_value = re.sub(r"(?i)Rp\.?\s*", "", discount_value).strip()
     
     # Extract terms & conditions (sentence after S&K, Syarat, or Promo berlaku)
     terms_match = re.search(r'(?:S&K|Syarat & Ketentuan|Syarat|T&C|Promo berlaku)\s*:?\s*(.*)', text, re.IGNORECASE)

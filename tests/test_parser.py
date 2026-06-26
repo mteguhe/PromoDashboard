@@ -27,7 +27,7 @@ def test_parse_rupiah_discount_using_diskon():
     result = parse_promo_text(text, category="flight")
     
     assert result["promo_code"] == "CITILINK-50"
-    assert result["discount_value"] == "Rp 50.000"
+    assert result["discount_value"] == "50.000"
     assert result["airline"] == "Citilink"
     assert result["expired_date"] == "2026-10-10"
 
@@ -36,7 +36,7 @@ def test_parse_promo_code_special_characters():
     result = parse_promo_text(text, category="food")
     
     assert result["promo_code"] == "KFC_FEAST-99"
-    assert result["discount_value"] == "Rp 50.000"
+    assert result["discount_value"] == "50.000"
     assert result["brand_name"] == "KFC"
     assert result["expired_date"] == "2026-12-31"
 
@@ -62,7 +62,7 @@ def test_parse_promo_code_false_positive():
     result = parse_promo_text(text, category="flight")
     
     assert result["promo_code"] is None
-    assert result["discount_value"] == "Rp 100.000"
+    assert result["discount_value"] == "100.000"
 
 def test_parse_lowercase_promo_code():
     text1 = "Dapatkan diskon 50% dengan kode promo KfcFeast."
@@ -72,13 +72,29 @@ def test_parse_lowercase_promo_code():
     text2 = "Gunakan PROMO CODE: airasia-school untuk potongan Rp 50 ribu."
     res2 = parse_promo_text(text2, category="flight")
     assert res2["promo_code"] == "airasia-school"
-    assert res2["discount_value"] == "Rp 50 ribu"
+    assert res2["discount_value"] == "50 ribu"
 
 def test_parse_rupiah_slang_discounts():
     text1 = "Dapatkan potongan Rp 50 rb untuk tiket Citilink."
     res1 = parse_promo_text(text1, category="flight")
-    assert res1["discount_value"] == "Rp 50 rb"
+    assert res1["discount_value"] == "50 rb"
     
     text2 = "Nikmati diskon Rp 100 ribu di Starbucks."
     res2 = parse_promo_text(text2, category="food")
-    assert res2["discount_value"] == "Rp 100 ribu"
+    assert res2["discount_value"] == "100 ribu"
+
+def test_parse_new_robustness_features():
+    # 1. Travel period vs expiry date
+    text1 = "Terbang mulai 2026-07-01. Promo berlaku s.d 2026-08-30"
+    res1 = parse_promo_text(text1, category="flight")
+    assert res1["expired_date"] == "2026-08-30"
+    
+    # 2. diskon Rp. 50.000
+    text2 = "Dapatkan diskon Rp. 50.000 untuk pembelian tiket Batik Air."
+    res2 = parse_promo_text(text2, category="flight")
+    assert res2["discount_value"] == "50.000"
+    
+    # 3. cashback 50k
+    text3 = "Nikmati cashback 50k untuk menu seasonal Starbucks."
+    res3 = parse_promo_text(text3, category="food")
+    assert res3["discount_value"] == "50k"
