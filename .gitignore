@@ -17,3 +17,8 @@ Thumbs.db
 # Editors
 .vscode/
 .idea/
+
+# SQLite temporary files
+*.db-journal
+*.db-wal
+*.db-shm
