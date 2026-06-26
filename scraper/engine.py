@@ -1,4 +1,3 @@
-import sys
 from scraper.db_manager import DatabaseManager
 from scraper.parser import parse_promo_text
 
@@ -34,33 +33,43 @@ MOCK_FOOD_SOURCES = [
 ]
 
 def run_scraping_job(db_path="promo.db", use_mock_source=True):
+    if not use_mock_source:
+        print("Real source scraping not implemented yet.")
+        return
+
     # Use context manager for DatabaseManager
     with DatabaseManager(db_path) as db_mgr:
         print("Starting ingestion engine...")
         
         # Process Flight Promos
         for src in MOCK_FLIGHT_SOURCES:
-            parsed = parse_promo_text(src["text"], category="flight")
-            parsed.update({
-                "title": src["title"],
-                "description": src["text"],
-                "source_platform": src["platform"],
-                "source_url": src["source_url"]
-            })
-            db_mgr.insert_flight_promo(parsed)
-            print(f"Ingested flight promo: {src['title']}")
+            try:
+                parsed = parse_promo_text(src["text"], category="flight")
+                parsed.update({
+                    "title": src["title"],
+                    "description": src["text"],
+                    "source_platform": src["platform"],
+                    "source_url": src["source_url"]
+                })
+                db_mgr.insert_flight_promo(parsed)
+                print(f"Ingested flight promo: {src['title']}")
+            except Exception as e:
+                print(f"Error ingesting flight promo {src['title']}: {e}")
 
         # Process Food Promos
         for src in MOCK_FOOD_SOURCES:
-            parsed = parse_promo_text(src["text"], category="food")
-            parsed.update({
-                "title": src["title"],
-                "description": src["text"],
-                "source_platform": src["platform"],
-                "source_url": src["source_url"]
-            })
-            db_mgr.insert_food_promo(parsed)
-            print(f"Ingested food promo: {src['title']}")
+            try:
+                parsed = parse_promo_text(src["text"], category="food")
+                parsed.update({
+                    "title": src["title"],
+                    "description": src["text"],
+                    "source_platform": src["platform"],
+                    "source_url": src["source_url"]
+                })
+                db_mgr.insert_food_promo(parsed)
+                print(f"Ingested food promo: {src['title']}")
+            except Exception as e:
+                print(f"Error ingesting food promo {src['title']}: {e}")
             
         print("Ingestion engine execution finished.")
 
@@ -69,3 +78,4 @@ if __name__ == "__main__":
     from db.init_db import init_database
     init_database()
     run_scraping_job()
+
