@@ -32,3 +32,7 @@ CREATE TABLE IF NOT EXISTS food_promos (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     scraped_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX IF NOT EXISTS idx_flight_promos_created_at ON flight_promos(created_at);
+CREATE INDEX IF NOT EXISTS idx_food_promos_created_at ON food_promos(created_at);
+
