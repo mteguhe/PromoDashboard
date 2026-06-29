@@ -40,8 +40,9 @@ def extract_article_text(html_content, css_selector):
                 target_area = soup.select_one(selector)
                 if target_area:
                     break
-                
-        if not target_area:
+            if not target_area:
+                return ""
+        else:
             target_area = soup.body if soup.body else soup
             
         text = target_area.get_text(separator=" ")

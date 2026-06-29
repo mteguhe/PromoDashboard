@@ -105,3 +105,42 @@ def test_run_scraping_job_real_flow_error_handling(mock_extract, mock_download, 
     assert row[2] == "50%"
     assert row[3] == "https://food.detik.com/kfc-promo"
     conn.close()
+
+
+@patch('scraper.engine.fetch_rss_entries')
+@patch('scraper.engine.download_page_html')
+@patch('scraper.engine.extract_article_text')
+@patch('scraper.engine.parse_with_gemini')
+@patch('scraper.engine.parse_promo_text')
+def test_run_scraping_job_parser_failure_graceful_skip(
+    mock_parse_promo, mock_parse_gemini, mock_extract, mock_download, mock_fetch
+):
+    # Setup mocks
+    mock_fetch.return_value = [
+        {
+            "title": "Failed Promo Article",
+            "link": "https://food.detik.com/failed-promo",
+            "description": "This promo has no parseable content"
+        }
+    ]
+    mock_download.return_value = "<html><body>Some text</body></html>"
+    mock_extract.return_value = "Some text"
+    
+    # Both parsers return None
+    mock_parse_gemini.return_value = None
+    mock_parse_promo.return_value = None
+    
+    # Run scraping job - it should not raise AttributeError and should complete successfully
+    run_scraping_job(DB_INTEGRATION_FILE, use_mock_source=False)
+    
+    # Verify that nothing was inserted into the database
+    conn = sqlite3.connect(DB_INTEGRATION_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM food_promos")
+    foods_count = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM flight_promos")
+    flights_count = cursor.fetchone()[0]
+    assert foods_count == 0
+    assert flights_count == 0
+    conn.close()
+

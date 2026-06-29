@@ -18,7 +18,20 @@ JSON_SCHEMA = {
         "terms_and_conditions": {"type": "string", "nullable": True},
         "expired_date": {"type": "string", "description": "Date format YYYY-MM-DD", "nullable": True}
     },
-    "required": ["title", "description"]
+    "required": [
+        "title",
+        "description",
+        "airline",
+        "brand_name",
+        "origin_city",
+        "destination_city",
+        "promo_code",
+        "discount_value",
+        "min_transaction",
+        "locations",
+        "terms_and_conditions",
+        "expired_date"
+    ]
 }
 
 def parse_with_gemini(text, category="flight"):

@@ -90,6 +90,10 @@ def run_scraping_job(db_path="promo.db", use_mock_source=True):
                         print("Fallback: Parsing with local Regex Parser...")
                         parsed = parse_promo_text(article_text, category=source["category"])
                         
+                    if parsed is None:
+                        print(f"No promo content found in article: {title}")
+                        continue
+                        
                     # 4. Tambahkan metadata sumber
                     parsed.update({
                         "title": title,
