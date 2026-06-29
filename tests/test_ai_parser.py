@@ -12,8 +12,8 @@ def test_parse_with_gemini_no_api_key(monkeypatch):
     assert result is None
 
 @patch('google.generativeai.GenerativeModel')
-def test_parse_with_gemini_success(mock_model_class):
-    os.environ["GEMINI_API_KEY"] = "mock_key_here"
+def test_parse_with_gemini_success(mock_model_class, monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "mock_key_here")
     
     mock_model = MagicMock()
     mock_response = MagicMock()
