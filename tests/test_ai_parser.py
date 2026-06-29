@@ -4,10 +4,9 @@ import pytest
 from unittest.mock import patch, MagicMock
 from scraper.ai_parser import parse_with_gemini
 
-def test_parse_with_gemini_no_api_key():
+def test_parse_with_gemini_no_api_key(monkeypatch):
     # Tanpa API key, harus mengembalikan None agar fallback ke regex berjalan
-    if "GEMINI_API_KEY" in os.environ:
-        del os.environ["GEMINI_API_KEY"]
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
         
     result = parse_with_gemini("Teks artikel promo", category="flight")
     assert result is None
