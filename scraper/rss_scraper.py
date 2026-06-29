@@ -34,11 +34,12 @@ def extract_article_text(html_content, css_selector):
             
         # Cari area teks artikel utama
         target_area = None
-        selectors = [s.strip() for s in css_selector.split(",")]
-        for selector in selectors:
-            target_area = soup.select_one(selector)
-            if target_area:
-                break
+        if css_selector and css_selector.strip():
+            selectors = [s.strip() for s in css_selector.split(",") if s.strip()]
+            for selector in selectors:
+                target_area = soup.select_one(selector)
+                if target_area:
+                    break
                 
         if not target_area:
             target_area = soup.body if soup.body else soup
