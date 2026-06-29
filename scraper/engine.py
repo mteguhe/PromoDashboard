@@ -52,56 +52,62 @@ def run_scraping_job(db_path="promo.db", use_mock_source=True):
             entries = fetch_rss_entries(source["url"])
             
             for entry in entries:
-                url = entry["link"]
-                title = entry["title"]
-                
-                # Cek apakah URL sudah pernah di-scrape (Deduplikasi awal)
-                cursor = db_mgr.conn.cursor()
-                if source["category"] == "flight":
-                    cursor.execute("SELECT id FROM flight_promos WHERE source_url=?", (url,))
-                else:
-                    cursor.execute("SELECT id FROM food_promos WHERE source_url=?", (url,))
+                try:
+                    url = entry["link"]
+                    title = entry["title"]
                     
-                if cursor.fetchone():
-                    # Sudah pernah diproses, lewati
+                    # Cek apakah URL sudah pernah di-scrape (Deduplikasi awal)
+                    cursor = db_mgr.conn.cursor()
+                    if source["category"] == "flight":
+                        cursor.execute("SELECT id FROM flight_promos WHERE source_url=?", (url,))
+                    else:
+                        cursor.execute("SELECT id FROM food_promos WHERE source_url=?", (url,))
+                        
+                    if cursor.fetchone():
+                        # Sudah pernah diproses, lewati
+                        continue
+                        
+                    print(f"Scraping new article: {title} ({url})")
+                    
+                    # 1. Download Halaman Artikel Penuh
+                    html = download_page_html(url)
+                    if not html:
+                        continue
+                        
+                    # 2. Ekstrak Teks Utama
+                    article_text = extract_article_text(html, source["selector"])
+                    if not article_text:
+                        # Fallback menggunakan summary RSS jika web gagal diekstrak
+                        article_text = entry["description"]
+                        
+                    # 3. Parsing Data (Hybrid: AI -> Regex)
+                    parsed = None
+                    if os.environ.get("GEMINI_API_KEY"):
+                        print("Attempting to parse with Gemini AI...")
+                        parsed = parse_with_gemini(article_text, category=source["category"])
+                        
+                    if not parsed:
+                        print("Fallback: Parsing with local Regex Parser...")
+                        parsed = parse_promo_text(article_text, category=source["category"])
+                        
+                    # 4. Tambahkan metadata sumber
+                    parsed.update({
+                        "title": title,
+                        "description": article_text[:500],  # Simpan ringkasan teks artikel
+                        "source_platform": "News",
+                        "source_url": url
+                    })
+                    
+                    # 5. Simpan ke Database
+                    if source["category"] == "flight":
+                        db_mgr.insert_flight_promo(parsed)
+                    else:
+                        db_mgr.insert_food_promo(parsed)
+                except Exception as e:
+                    entry_title = entry.get("title", "Unknown Title") if isinstance(entry, dict) else "Unknown Title"
+                    entry_url = entry.get("link", "Unknown URL") if isinstance(entry, dict) else "Unknown URL"
+                    print(f"Error processing entry '{entry_title}' ({entry_url}): {e}")
                     continue
-                    
-                print(f"Scraping new article: {title} ({url})")
-                
-                # 1. Download Halaman Artikel Penuh
-                html = download_page_html(url)
-                if not html:
-                    continue
-                    
-                # 2. Ekstrak Teks Utama
-                article_text = extract_article_text(html, source["selector"])
-                if not article_text:
-                    # Fallback menggunakan summary RSS jika web gagal diekstrak
-                    article_text = entry["description"]
-                    
-                # 3. Parsing Data (Hybrid: AI -> Regex)
-                parsed = None
-                if os.environ.get("GEMINI_API_KEY"):
-                    print("Attempting to parse with Gemini AI...")
-                    parsed = parse_with_gemini(article_text, category=source["category"])
-                    
-                if not parsed:
-                    print("Fallback: Parsing with local Regex Parser...")
-                    parsed = parse_promo_text(article_text, category=source["category"])
-                    
-                # 4. Tambahkan metadata sumber
-                parsed.update({
-                    "title": title,
-                    "description": article_text[:500],  # Simpan ringkasan teks artikel
-                    "source_platform": "News",
-                    "source_url": url
-                })
-                
-                # 5. Simpan ke Database
-                if source["category"] == "flight":
-                    db_mgr.insert_flight_promo(parsed)
-                else:
-                    db_mgr.insert_food_promo(parsed)
                     
     print("Real Ingestion Engine finished successfully.")
 

@@ -68,3 +68,40 @@ def test_run_scraping_job_real_flow(mock_extract, mock_download, mock_fetch):
     assert row[2] == "50%"
     assert row[3] == "https://food.detik.com/kfc-promo"
     conn.close()
+
+
+@patch('scraper.engine.fetch_rss_entries')
+@patch('scraper.engine.download_page_html')
+@patch('scraper.engine.extract_article_text')
+def test_run_scraping_job_real_flow_error_handling(mock_extract, mock_download, mock_fetch):
+    # Mock RSS entries: first one is malformed/raises exception (e.g. link is None or missing to cause KeyError/TypeError)
+    # second one is valid.
+    mock_fetch.return_value = [
+        {
+            # Missing "link" key entirely, which will raise KeyError when entry["link"] is accessed
+            "title": "Malformed Entry",
+            "description": "This should fail"
+        },
+        {
+            "title": "Diskon 50% KFC Akhir Pekan",
+            "link": "https://food.detik.com/kfc-promo",
+            "description": "KFC diskon heboh"
+        }
+    ]
+    mock_download.return_value = "<html><body>Teks Lengkap KFC</body></html>"
+    mock_extract.return_value = "KFC diskon 50% kode promo KFCFEAST s.d 2026-08-30."
+    
+    # Jalankan job riil (tanpa use_mock_source)
+    run_scraping_job(DB_INTEGRATION_FILE, use_mock_source=False)
+    
+    # Verify that the second entry was successfully saved, meaning the loop continued
+    conn = sqlite3.connect(DB_INTEGRATION_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT brand_name, promo_code, discount_value, source_url FROM food_promos")
+    row = cursor.fetchone()
+    assert row is not None
+    assert row[0] == "KFC"
+    assert row[1] == "KFCFEAST"
+    assert row[2] == "50%"
+    assert row[3] == "https://food.detik.com/kfc-promo"
+    conn.close()
