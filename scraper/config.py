@@ -59,3 +59,34 @@ PORTAL_SOURCES = [
         "selector": ".promo-card, .promotion-card, article.promo",
     },
 ]
+
+SOCIAL_ACCOUNTS = [
+    {
+        "name": "Traveloka",
+        "url": "https://www.threads.net/@traveloka",
+        "category": "flight",
+        "platform": "threads",
+        "selector": "article, [data-pressable-container], .x9f619",
+    },
+    {
+        "name": "Shopee Indonesia",
+        "url": "https://www.threads.net/@shopee_id",
+        "category": "food",
+        "platform": "threads",
+        "selector": "article, [data-pressable-container]",
+    },
+    {
+        "name": "Zalora Indonesia",
+        "url": "https://www.threads.net/@zaloraid",
+        "category": "fashion",
+        "platform": "threads",
+        "selector": "article, [data-pressable-container]",
+    },
+    {
+        "name": "Loket",
+        "url": "https://www.threads.net/@loket.com",
+        "category": "event",
+        "platform": "threads",
+        "selector": "article, [data-pressable-container]",
+    },
+]
