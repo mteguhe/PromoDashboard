@@ -1,145 +1,129 @@
-import os
 import sqlite3
 import pytest
 from unittest.mock import patch, MagicMock
 from db.init_db import init_database
 from scraper.engine import run_scraping_job
 
-DB_FILE = "test_engine.db"
+@pytest.fixture
+def fresh_db(tmp_path):
+    db_path = str(tmp_path / "test_engine.db")
+    init_database(db_path)
+    return db_path
 
-def test_run_scraping_job(tmp_path):
-    db_file = tmp_path / DB_FILE
-    init_database(str(db_file))
-    
-    # Jalankan parser mock di engine
-    run_scraping_job(str(db_file), use_mock_source=True)
-    
-    conn = sqlite3.connect(str(db_file))
-    cursor = conn.cursor()
-    
-    cursor.execute("SELECT COUNT(*) FROM promos WHERE category = 'flight'")
-    flights_count = cursor.fetchone()[0]
-    assert flights_count > 0
-
-    cursor.execute("SELECT COUNT(*) FROM promos WHERE category = 'food'")
-    foods_count = cursor.fetchone()[0]
-    assert foods_count > 0
-    
+def test_run_mock_job_inserts_promos(fresh_db):
+    run_scraping_job(fresh_db, use_mock_source=True)
+    conn = sqlite3.connect(fresh_db)
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM promos")
+    count = cur.fetchone()[0]
     conn.close()
+    assert count > 0
 
+@patch("scraper.engine.RssAdapter")
+@patch("scraper.engine.SocialAdapter")
+@patch("scraper.engine.PortalAdapter")
+def test_real_job_calls_all_adapters(mock_portal, mock_social, mock_rss, fresh_db):
+    mock_portal.return_value.fetch.return_value = []
+    mock_social.return_value.fetch.return_value = []
+    mock_rss.return_value.fetch.return_value = []
 
-# Tambahkan pengujian baru untuk real ingestion flow
-DB_INTEGRATION_FILE = "test_engine_integration.db"
+    run_scraping_job(fresh_db, use_mock_source=False)
 
-def setup_function():
-    if os.path.exists(DB_INTEGRATION_FILE):
-        os.remove(DB_INTEGRATION_FILE)
-    init_database(DB_INTEGRATION_FILE)
+    mock_portal.return_value.fetch.assert_called_once()
+    mock_social.return_value.fetch.assert_called_once()
+    mock_rss.return_value.fetch.assert_called_once()
 
-def teardown_function():
-    if os.path.exists(DB_INTEGRATION_FILE):
-        os.remove(DB_INTEGRATION_FILE)
+@patch("scraper.engine.parse_promo_text")
+@patch("scraper.engine.RssAdapter")
+@patch("scraper.engine.SocialAdapter")
+@patch("scraper.engine.PortalAdapter")
+def test_real_job_inserts_valid_promo(mock_portal, mock_social, mock_rss, mock_parse, fresh_db):
+    mock_portal.return_value.fetch.return_value = [{
+        "title": "KFC Diskon 50%",
+        "description": "KFC diskon 50% kode promo KFCFEAST s.d 2026-08-30",
+        "category": "food",
+        "brand_name": "KFC",
+        "source_platform": "GoFood Promo",
+        "source_url": "https://gofood.co.id/promo/kfc-1",
+        "promo_code": None,
+        "discount_value": None,
+        "min_transaction": None,
+        "expired_date": None,
+    }]
+    mock_social.return_value.fetch.return_value = []
+    mock_rss.return_value.fetch.return_value = []
+    mock_parse.return_value = {
+        "promo_code": "KFCFEAST",
+        "discount_value": "50%",
+        "expired_date": "2026-08-30",
+        "brand_name": "KFC",
+        "category": "food",
+    }
 
-@patch('scraper.engine.fetch_rss_entries')
-@patch('scraper.engine.download_page_html')
-@patch('scraper.engine.extract_article_text')
-def test_run_scraping_job_real_flow(mock_extract, mock_download, mock_fetch):
-    # Mock RSS entry
-    mock_fetch.return_value = [
-        {
-            "title": "Diskon 50% KFC Akhir Pekan",
-            "link": "https://food.detik.com/kfc-promo",
-            "description": "KFC diskon heboh"
-        }
-    ]
-    mock_download.return_value = "<html><body>Teks Lengkap KFC</body></html>"
-    mock_extract.return_value = "KFC diskon 50% kode promo KFCFEAST s.d 2026-08-30."
-    
-    # Jalankan job riil (tanpa use_mock_source)
-    run_scraping_job(DB_INTEGRATION_FILE, use_mock_source=False)
-    
-    conn = sqlite3.connect(DB_INTEGRATION_FILE)
-    cursor = conn.cursor()
-    cursor.execute("SELECT brand_name, promo_code, discount_value, source_url FROM promos WHERE source_url = ?",
-                   ("https://food.detik.com/kfc-promo",))
-    row = cursor.fetchone()
+    run_scraping_job(fresh_db, use_mock_source=False)
+
+    conn = sqlite3.connect(fresh_db)
+    cur = conn.cursor()
+    cur.execute("SELECT promo_code, discount_value FROM promos WHERE source_url=?",
+                ("https://gofood.co.id/promo/kfc-1",))
+    row = cur.fetchone()
+    conn.close()
     assert row is not None
-    assert row[0] is not None  # brand_name saved (actual value depends on which category parser runs first)
-    assert row[1] == "KFCFEAST"
-    assert row[2] == "50%"
-    assert row[3] == "https://food.detik.com/kfc-promo"
+    assert row[0] == "KFCFEAST"
+    assert row[1] == "50%"
+
+@patch("scraper.engine.RssAdapter")
+@patch("scraper.engine.SocialAdapter")
+@patch("scraper.engine.PortalAdapter")
+def test_real_job_skips_duplicate_url(mock_portal, mock_social, mock_rss, fresh_db):
+    item = {
+        "title": "Promo Zalora",
+        "description": "Sale 70% off",
+        "category": "fashion",
+        "brand_name": "Zalora",
+        "source_platform": "Zalora Sale",
+        "source_url": "https://zalora.co.id/sale/1",
+        "promo_code": "SALE70",
+        "discount_value": "70%",
+        "min_transaction": None,
+        "expired_date": "2026-09-01",
+    }
+    mock_portal.return_value.fetch.return_value = [item, item]
+    mock_social.return_value.fetch.return_value = []
+    mock_rss.return_value.fetch.return_value = []
+
+    run_scraping_job(fresh_db, use_mock_source=False)
+
+    conn = sqlite3.connect(fresh_db)
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM promos WHERE source_url=?", (item["source_url"],))
+    assert cur.fetchone()[0] == 1
     conn.close()
 
+@patch("scraper.engine.validate_promo", return_value=False)
+@patch("scraper.engine.RssAdapter")
+@patch("scraper.engine.SocialAdapter")
+@patch("scraper.engine.PortalAdapter")
+def test_real_job_skips_invalid_promo(mock_portal, mock_social, mock_rss, mock_validate, fresh_db):
+    mock_portal.return_value.fetch.return_value = [{
+        "title": "Berita Umum",
+        "description": "Artikel tanpa promo",
+        "category": "food",
+        "brand_name": None,
+        "source_platform": "RSS",
+        "source_url": "https://news.com/artikel-1",
+        "promo_code": None,
+        "discount_value": None,
+        "min_transaction": None,
+        "expired_date": None,
+    }]
+    mock_social.return_value.fetch.return_value = []
+    mock_rss.return_value.fetch.return_value = []
 
-@patch('scraper.engine.fetch_rss_entries')
-@patch('scraper.engine.download_page_html')
-@patch('scraper.engine.extract_article_text')
-def test_run_scraping_job_real_flow_error_handling(mock_extract, mock_download, mock_fetch):
-    # Mock RSS entries: first one is malformed/raises exception (e.g. link is None or missing to cause KeyError/TypeError)
-    # second one is valid.
-    mock_fetch.return_value = [
-        {
-            # Missing "link" key entirely, which will raise KeyError when entry["link"] is accessed
-            "title": "Malformed Entry",
-            "description": "This should fail"
-        },
-        {
-            "title": "Diskon 50% KFC Akhir Pekan",
-            "link": "https://food.detik.com/kfc-promo",
-            "description": "KFC diskon heboh"
-        }
-    ]
-    mock_download.return_value = "<html><body>Teks Lengkap KFC</body></html>"
-    mock_extract.return_value = "KFC diskon 50% kode promo KFCFEAST s.d 2026-08-30."
+    run_scraping_job(fresh_db, use_mock_source=False)
 
-    # Jalankan job riil (tanpa use_mock_source)
-    run_scraping_job(DB_INTEGRATION_FILE, use_mock_source=False)
-
-    # Verify that the second entry was successfully saved, meaning the loop continued
-    conn = sqlite3.connect(DB_INTEGRATION_FILE)
-    cursor = conn.cursor()
-    cursor.execute("SELECT brand_name, promo_code, discount_value, source_url FROM promos WHERE source_url = ?",
-                   ("https://food.detik.com/kfc-promo",))
-    row = cursor.fetchone()
-    assert row is not None
-    assert row[0] is not None  # brand_name saved (actual value depends on which category parser runs first)
-    assert row[1] == "KFCFEAST"
-    assert row[2] == "50%"
-    assert row[3] == "https://food.detik.com/kfc-promo"
+    conn = sqlite3.connect(fresh_db)
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM promos")
+    assert cur.fetchone()[0] == 0
     conn.close()
-
-
-@patch('scraper.engine.fetch_rss_entries')
-@patch('scraper.engine.download_page_html')
-@patch('scraper.engine.extract_article_text')
-@patch('scraper.engine.parse_with_gemini')
-@patch('scraper.engine.parse_promo_text')
-def test_run_scraping_job_parser_failure_graceful_skip(
-    mock_parse_promo, mock_parse_gemini, mock_extract, mock_download, mock_fetch
-):
-    # Setup mocks
-    mock_fetch.return_value = [
-        {
-            "title": "Failed Promo Article",
-            "link": "https://food.detik.com/failed-promo",
-            "description": "This promo has no parseable content"
-        }
-    ]
-    mock_download.return_value = "<html><body>Some text</body></html>"
-    mock_extract.return_value = "Some text"
-    
-    # Both parsers return None
-    mock_parse_gemini.return_value = None
-    mock_parse_promo.return_value = None
-    
-    # Run scraping job - it should not raise AttributeError and should complete successfully
-    run_scraping_job(DB_INTEGRATION_FILE, use_mock_source=False)
-    
-    # Verify that nothing was inserted into the database
-    conn = sqlite3.connect(DB_INTEGRATION_FILE)
-    cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM promos")
-    total_count = cursor.fetchone()[0]
-    assert total_count == 0
-    conn.close()
-

@@ -1,162 +1,114 @@
 import os
-import sqlite3
 from scraper.db_manager import DatabaseManager
-from scraper.parser import parse_promo_text
-from scraper.config import FEED_SOURCES
-from scraper.rss_scraper import fetch_rss_entries, download_page_html, extract_article_text
+from scraper.config import FEED_SOURCES, PORTAL_SOURCES, SOCIAL_ACCOUNTS
+from scraper.adapters.portal_adapter import PortalAdapter
+from scraper.adapters.social_adapter import SocialAdapter
+from scraper.adapters.rss_adapter import RssAdapter
 from scraper.ai_parser import parse_with_gemini
+from scraper.parser import parse_promo_text
+from scraper.validator import validate_promo
 
-# Mock raw content sources
-MOCK_FLIGHT_SOURCES = [
+_MOCK_SOURCES = [
     {
         "title": "AirAsia Liburan Sekolah Flash Promo",
-        "text": "Promo Liburan Sekolah! KODE PROMO: AIRASIASCHOOL. Dapatkan diskon 20% tiket penerbangan AirAsia dari Jakarta ke Bali! S&K: Promo berlaku hingga 2026-07-15 dengan pembelian minimal 2 tiket.",
+        "text": "Promo Liburan Sekolah! KODE PROMO: AIRASIASCHOOL. Dapatkan diskon 20% tiket penerbangan AirAsia dari Jakarta ke Bali! S&K: Promo berlaku hingga 2026-07-15.",
         "source_url": "https://www.youtube.com/watch?v=mockairasia",
-        "platform": "YouTube"
+        "platform": "YouTube",
+        "category": "flight",
     },
-    {
-        "title": "Garuda Indonesia Gajian Deals",
-        "text": "Spesial Akhir Bulan! Nikmati diskon potongan Rp 300.000 rute domestik Garuda Indonesia tanpa kode promo. Syarat: Berlaku s.d 2026-07-28 nasional.",
-        "source_url": "https://twitter.com/garudapromo/status/12345",
-        "platform": "Twitter"
-    }
-]
-
-MOCK_FOOD_SOURCES = [
     {
         "title": "KFC Feast Hemat Akhir Pekan",
-        "text": "Weekend hemat di KFC! Gunakan kode promo KFCFEAST untuk diskon hemat 50% di KFC dengan minimal pembelian Rp 100.000. Syarat: Berlaku s.d 2026-08-30 secara nasional.",
+        "text": "Weekend hemat di KFC! Gunakan kode promo KFCFEAST untuk diskon hemat 50% di KFC dengan minimal pembelian Rp 100.000. Berlaku s.d 2026-08-30.",
         "source_url": "https://tiktok.com/@kfcindonesia/video/98765",
-        "platform": "TikTok"
+        "platform": "TikTok",
+        "category": "food",
     },
-    {
-        "title": "Starbucks Coffee Break promo",
-        "text": "Dapatkan diskon potongan Rp 15.000 di Starbucks menggunakan kode promo SBXCOFFEE. S&K: Min transaksi Rp 50.000 berlaku s.d 2026-07-10.",
-        "source_url": "https://detik.com/food/starbucks-juni-promo",
-        "platform": "News"
-    }
 ]
 
-def run_scraping_job(db_path="promo.db", use_mock_source=True):
+def run_scraping_job(db_path: str = "promo.db", use_mock_source: bool = False) -> None:
     if use_mock_source:
-        # Logika mock tetap sama seperti sebelumnya
-        _run_mock_scraping_job(db_path)
+        _run_mock_job(db_path)
         return
 
-    print("Starting real RSS Ingestion Engine...")
+    print("Starting Ingestion Engine...")
+    adapters = [
+        PortalAdapter(PORTAL_SOURCES),
+        SocialAdapter(SOCIAL_ACCOUNTS),
+        RssAdapter(FEED_SOURCES),
+    ]
+
     with DatabaseManager(db_path) as db_mgr:
-        
-        # Loop target RSS feed dari config
-        for source in FEED_SOURCES:
-            print(f"Processing feed source: {source['name']}")
-            entries = fetch_rss_entries(source["url"])
-            
-            for entry in entries:
+        for adapter in adapters:
+            name = type(adapter).__name__
+            print(f"Running {name}...")
+            try:
+                raw_items = adapter.fetch()
+            except Exception as e:
+                print(f"[engine] {name} failed: {e}")
+                continue
+
+            for item in raw_items:
                 try:
-                    url = entry["link"]
-                    title = entry["title"]
-                    
-                    # Cek apakah URL sudah pernah di-scrape (Deduplikasi awal)
-                    if db_mgr.url_exists(url):
-                        # Sudah pernah diproses, lewati
+                    url = item.get("source_url", "")
+                    if not url or db_mgr.url_exists(url):
                         continue
-                        
-                    print(f"Scraping new article: {title} ({url})")
-                    
-                    # 1. Download Halaman Artikel Penuh
-                    html = download_page_html(url)
-                    if not html:
-                        continue
-                        
-                    # 2. Ekstrak Teks Utama
-                    article_text = extract_article_text(html, source["selector"])
-                    if not article_text:
-                        # Fallback menggunakan summary RSS jika web gagal diekstrak
-                        article_text = entry["description"]
-                        
-                    # 3. Parsing Data (Hybrid: AI -> Regex)
+
+                    article_text = item.get("description") or item.get("title", "")
+                    category = item.get("category", "food")
+
                     parsed = None
                     if os.environ.get("GEMINI_API_KEY"):
-                        print("Attempting to parse with Gemini AI...")
-                        parsed = parse_with_gemini(article_text, category=source["category"])
-                        if parsed and not parsed.get("is_promo"):
-                            print(f"Skipping article (Gemini determined not a promo): {title}")
-                            continue
-                        
+                        parsed = parse_with_gemini(article_text, category=category)
+
                     if not parsed:
-                        print("Fallback: Parsing with local Regex Parser...")
-                        parsed = parse_promo_text(article_text, category=source["category"])
-                        # Allow event category to bypass the promo code / discount requirement
-                        if parsed and parsed.get("category") != "event" and not parsed.get("promo_code") and not parsed.get("discount_value"):
-                            print(f"Skipping article (Local Regex determined not a promo): {title}")
-                            continue
-                        
+                        parsed = parse_promo_text(article_text, category=category)
+
                     if not parsed:
-                        print(f"No promo content found in article: {title}")
                         continue
-                        
-                    # 4. Tambahkan metadata sumber
-                    parsed.update({
-                        "title": title,
-                        "description": article_text[:500],  # Simpan ringkasan teks artikel
-                        "source_platform": "News",
-                        "source_url": url
-                    })
-                    
-                    # 5. Simpan ke Database
-                    parsed["category"] = source["category"]
+
+                    # Normalize airline → brand_name for flight promos
                     if not parsed.get("brand_name") and parsed.get("airline"):
                         parsed["brand_name"] = parsed["airline"]
-                    db_mgr.insert_promo(parsed)
-                except Exception as e:
-                    entry_title = entry.get("title", "Unknown Title") if isinstance(entry, dict) else "Unknown Title"
-                    entry_url = entry.get("link", "Unknown URL") if isinstance(entry, dict) else "Unknown URL"
-                    print(f"Error processing entry '{entry_title}' ({entry_url}): {e}")
-                    continue
-                    
-    print("Real Ingestion Engine finished successfully.")
 
-def _run_mock_scraping_job(db_path):
-    # Pindahkan logika mock lama ke fungsi pembantu internal ini
+                    parsed.update({
+                        "title": item.get("title") or parsed.get("title", ""),
+                        "description": article_text[:500],
+                        "source_platform": item.get("source_platform", "Unknown"),
+                        "source_url": url,
+                        "category": category,
+                    })
+
+                    if validate_promo(parsed):
+                        db_mgr.insert_promo(parsed)
+                        print(f"[engine] Inserted: {parsed.get('title', '')[:60]}")
+                    else:
+                        print(f"[engine] Skipped (no promo signal): {item.get('title', '')[:60]}")
+                except Exception as e:
+                    print(f"[engine] Error processing '{item.get('title', '')}': {e}")
+
+    print("Ingestion Engine finished.")
+
+def _run_mock_job(db_path: str) -> None:
     with DatabaseManager(db_path) as db_mgr:
-        for src in MOCK_FLIGHT_SOURCES:
+        for src in _MOCK_SOURCES:
             try:
-                parsed = parse_promo_text(src["text"], category="flight")
-                parsed.update({
-                    "title": src["title"],
-                    "description": src["text"],
-                    "source_platform": src["platform"],
-                    "source_url": src["source_url"],
-                    "category": "flight"
-                })
+                parsed = parse_promo_text(src["text"], category=src["category"])
                 if not parsed.get("brand_name") and parsed.get("airline"):
                     parsed["brand_name"] = parsed["airline"]
-                db_mgr.insert_promo(parsed)
-            except Exception as e:
-                print(f"Error: {e}")
-        for src in MOCK_FOOD_SOURCES:
-            try:
-                parsed = parse_promo_text(src["text"], category="food")
                 parsed.update({
                     "title": src["title"],
                     "description": src["text"],
                     "source_platform": src["platform"],
                     "source_url": src["source_url"],
-                    "category": "food"
+                    "category": src["category"],
                 })
                 db_mgr.insert_promo(parsed)
             except Exception as e:
-                print(f"Error: {e}")
+                print(f"[engine] Mock error: {e}")
 
 if __name__ == "__main__":
     import sys
-    # Inisialisasi database lokal jika dijalankan mandiri
     from db.init_db import init_database
     init_database()
-    
-    use_mock = True
-    if "--real" in sys.argv:
-        use_mock = False
-        
+    use_mock = "--mock" in sys.argv
     run_scraping_job(use_mock_source=use_mock)
-
