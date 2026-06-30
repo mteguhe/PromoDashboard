@@ -7,10 +7,11 @@ export const dynamic = 'force-dynamic';
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const category = searchParams.get('category') || 'flight'; // flight atau food
-    if (category !== 'flight' && category !== 'food') {
+    const category = searchParams.get('category') || 'flight'; // flight, food, fashion, event, entertainment
+    const validCategories = ['flight', 'food', 'fashion', 'event', 'entertainment'];
+    if (!validCategories.includes(category)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid category. Must be flight or food.' },
+        { success: false, error: `Invalid category. Must be one of: ${validCategories.join(', ')}` },
         { status: 400 }
       );
     }
@@ -31,6 +32,15 @@ export async function GET(request) {
     } else {
       let query = 'SELECT * FROM food_promos WHERE 1=1';
       const params = [];
+      
+      if (category === 'food') {
+        query += ' AND (category = ? OR category = ? OR category IS NULL)';
+        params.push('food', 'F&B');
+      } else {
+        query += ' AND category = ?';
+        params.push(category);
+      }
+
       if (search) {
         query += ' AND (title LIKE ? OR description LIKE ? OR brand_name LIKE ?)';
         params.push(`%${search}%`, `%${search}%`, `%${search}%`);

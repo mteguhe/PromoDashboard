@@ -60,6 +60,19 @@ def parse_promo_text(text, category="flight"):
     terms_match = re.search(r'(?:S&K|Syarat & Ketentuan|Syarat|T&C|Promo berlaku)\s*:?\s*(.*)', text, re.IGNORECASE)
     terms = terms_match.group(1).strip().rstrip('.') if terms_match else ""
     
+    # Classify category based on keywords
+    lowered_text = text.lower()
+    if any(w in lowered_text for w in ["flight", "penerbangan", "tiket pesawat", "maskapai", "garuda", "airasia", "citilink"]):
+        detected_category = "flight"
+    elif any(w in lowered_text for w in ["nonton", "cinema", "bioskop", "xxi", "cgv", "dufan", "trans studio", "rekreasi", "hiburan", "konser", "tiket masuk", "timezone", "timezone", "funworld", "wahana", "wisata", "taman bermain"]):
+        detected_category = "entertainment"
+    elif any(w in lowered_text for w in ["baju", "sepatu", "fashion", "uniqlo", "h&m", "matahari", "zara", "celana", "pakaian", "jeans", "tas", "sale", "great sale", "belanja", "shopping", "mall", "gramedia", "lottemart", "alfamidi", "supermarket", "minimarket"]):
+        detected_category = "fashion"
+    elif any(w in lowered_text for w in ["pameran", "event", "expo", "festival", "bazaar", "talkshow", "jobfair", "job fair", "wedding expo"]):
+        detected_category = "event"
+    else:
+        detected_category = category if category != "flight" else "food"
+
     result = {
         "promo_code": promo_code,
         "discount_value": discount_value,
@@ -93,11 +106,19 @@ def parse_promo_text(text, category="flight"):
         min_tx_match = re.search(r'(?:minimal pembelian|min transaksi|min purchase)\s*(Rp\s*\d+[\d.,]*|\d+[\d.,]*)', text, re.IGNORECASE)
         min_tx = min_tx_match.group(1).strip() if min_tx_match else None
         
+        # Extract location if mentioned
+        cities = ["Jakarta", "Bogor", "Depok", "Tangerang", "Bekasi", "Bandung", "Surabaya", "Yogyakarta", "Jogja", "Semarang", "Medan", "Makassar", "Bali"]
+        extracted_location = None
+        for city in cities:
+            if city.lower() in text.lower():
+                extracted_location = city
+                break
+
         result.update({
             "brand_name": extracted_brand or "Unknown Brand",
-            "category": "F&B",
+            "category": detected_category,
             "min_transaction": min_tx,
-            "locations": "Nasional"
+            "locations": extracted_location or "Nasional"
         })
         
     return result

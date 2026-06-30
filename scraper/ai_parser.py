@@ -7,6 +7,8 @@ JSON_SCHEMA = {
     "properties": {
         "title": {"type": "string"},
         "description": {"type": "string"},
+        "is_promo": {"type": "boolean", "description": "True if this article contains a specific, active promo, discount, or deal. False if it is just a general news article, tips, recipe, or lifestyle post without any active offer."},
+        "category": {"type": "string", "enum": ["flight", "food", "fashion", "event", "entertainment"], "description": "Classify the promo into one of these categories based on its content."},
         "airline": {"type": "string", "nullable": True},
         "brand_name": {"type": "string", "nullable": True},
         "origin_city": {"type": "string", "nullable": True},
@@ -19,17 +21,19 @@ JSON_SCHEMA = {
         "expired_date": {"type": "string", "description": "Date format YYYY-MM-DD", "nullable": True}
     },
     "required": [
-        "title",
-        "description",
-        "airline",
-        "brand_name",
-        "origin_city",
-        "destination_city",
-        "promo_code",
-        "discount_value",
-        "min_transaction",
-        "locations",
-        "terms_and_conditions",
+        "title", 
+        "description", 
+        "is_promo", 
+        "category",
+        "airline", 
+        "brand_name", 
+        "origin_city", 
+        "destination_city", 
+        "promo_code", 
+        "discount_value", 
+        "min_transaction", 
+        "locations", 
+        "terms_and_conditions", 
         "expired_date"
     ]
 }
@@ -51,10 +55,12 @@ def parse_with_gemini(text, category="flight"):
         )
         
         prompt = f"""
-        Ekstrak informasi promosi kategori '{category}' dari artikel berita Indonesia berikut ini.
+        Ekstrak informasi promosi dari artikel berita Indonesia berikut ini.
         Isi kolom fields sesuai skema JSON yang diberikan:
+        - Tentukan apakah artikel ini benar-benar berisi promo aktif pada field 'is_promo'. Jika hanya berisi berita umum, resep, atau tips tanpa penawaran/diskon khusus, set 'is_promo' ke false.
+        - Klasifikasikan kategori promo ke dalam salah satu dari: 'flight' (penerbangan), 'food' (makanan & minuman), 'fashion' (pakaian/sepatu/tas), 'event' (pameran/bazaar/festival), atau 'entertainment' (nonton/bioskop/tiket rekreasi/wisata) pada field 'category'.
         - Jika kategori 'flight', cari informasi 'airline', 'origin_city', 'destination_city', dll.
-        - Jika kategori 'food', cari informasi 'brand_name', 'min_transaction', 'locations', dll.
+        - Jika kategori 'food', 'fashion', 'event', atau 'entertainment', cari informasi 'brand_name', 'min_transaction', 'locations', dll.
         - Terjemahkan tanggal masa berlaku promo ke format YYYY-MM-DD pada field 'expired_date'.
         - Masukkan syarat & ketentuan khusus ke 'terms_and_conditions'.
         

@@ -245,3 +245,112 @@ body {
 .btn-retry:hover {
   opacity: 0.9;
 }
+
+/* Add Promo Card styles */
+.add-promo-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 25px;
+}
+
+.add-promo-title {
+  margin: 0 0 5px 0;
+  font-size: 1.1em;
+  color: #fff;
+}
+
+.add-promo-subtitle {
+  margin: 0 0 15px 0;
+  font-size: 0.85em;
+  color: var(--text-muted);
+}
+
+.add-promo-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.add-promo-row {
+  display: flex;
+  gap: 10px;
+}
+
+.add-promo-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-main);
+  color: #fff;
+  border-radius: 6px;
+  font-size: 0.9em;
+}
+
+.add-promo-input:focus,
+.add-promo-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.btn-add-promo {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.9em;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+
+.btn-add-promo:hover {
+  opacity: 0.9;
+}
+
+.btn-add-promo:disabled {
+  background: var(--border);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.fallback-container {
+  margin-top: 5px;
+}
+
+.add-promo-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-main);
+  color: #fff;
+  border-radius: 6px;
+  font-size: 0.9em;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.alert {
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 0.85em;
+  font-weight: 500;
+  margin-top: 5px;
+}
+
+.alert-success {
+  background: rgba(139, 195, 74, 0.1);
+  border: 1px solid var(--success);
+  color: #a2e059;
+}
+
+.alert-error {
+  background: rgba(255, 87, 34, 0.1);
+  border: 1px solid var(--accent);
+  color: #ff8a65;
+}
+

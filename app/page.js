@@ -10,6 +10,14 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // States for adding promo from social media
+  const [inputUrl, setInputUrl] = useState('');
+  const [inputText, setInputText] = useState('');
+  const [showTextFallback, setShowTextFallback] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [addSuccess, setAddSuccess] = useState(null);
+  const [addError, setAddError] = useState(null);
+
   // Debouncing search input
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -44,6 +52,44 @@ export default function Home() {
     fetchPromos();
   }, [category, debouncedSearch]);
 
+  const handleAddPromo = async (e) => {
+    e.preventDefault();
+    if (!inputUrl) return;
+    setAdding(true);
+    setAddError(null);
+    setAddSuccess(null);
+    try {
+      const res = await fetch('/api/scrape/url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: inputUrl, text: inputText })
+      });
+      const result = await res.json();
+      if (result.success) {
+        setAddSuccess(`Promo "${result.data.title}" berhasil ditambahkan!`);
+        setInputUrl('');
+        setInputText('');
+        setShowTextFallback(false);
+        // Automatically switch to the category of the added promo
+        const addedCategory = result.data.category || 'flight';
+        setCategory(addedCategory);
+        fetchPromos();
+      } else {
+        if (result.error && result.error.includes("Could not extract text") && !showTextFallback) {
+          setShowTextFallback(true);
+          setAddError("Platform ini membatasi pengambilan otomatis. Silakan tempelkan (paste) teks/caption postingan tersebut di bawah:");
+        } else {
+          setAddError(result.error || 'Gagal menambahkan promo.');
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      setAddError('Terjadi kesalahan koneksi saat memproses URL.');
+    } finally {
+      setAdding(false);
+    }
+  };
+
   return (
     <div className="container">
       {/* Header */}
@@ -53,6 +99,50 @@ export default function Home() {
           <span className="badge-scraper">Sync: 8:00 & 15:00 WIB</span>
         </div>
       </header>
+
+      {/* Add Custom Promo from Social Media */}
+      <div className="add-promo-card">
+        <h3 className="add-promo-title">✨ Tambah Promo Instan dari Sosmed</h3>
+        <p className="add-promo-subtitle">Tempel link dari Threads, Instagram, atau situs promo lainnya.</p>
+        
+        <form onSubmit={handleAddPromo} className="add-promo-form">
+          <div className="add-promo-row">
+            <input 
+              type="url" 
+              placeholder="https://www.threads.net/@user/post/..." 
+              value={inputUrl}
+              onChange={(e) => setInputUrl(e.target.value)}
+              className="add-promo-input"
+              disabled={adding}
+              required
+            />
+            <button 
+              type="submit" 
+              className="btn-add-promo" 
+              disabled={adding || !inputUrl}
+            >
+              {adding ? 'Memproses...' : 'Tambah Promo'}
+            </button>
+          </div>
+
+          {showTextFallback && (
+            <div className="fallback-container">
+              <textarea
+                placeholder="Tempel teks lengkap postingan di sini (misal: 'Jakarta Shanghai PP 3juta...')"
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                className="add-promo-textarea"
+                rows={4}
+                disabled={adding}
+                required
+              />
+            </div>
+          )}
+
+          {addSuccess && <div className="alert alert-success">{addSuccess}</div>}
+          {addError && <div className="alert alert-error">{addError}</div>}
+        </form>
+      </div>
 
       {/* Tab Switcher */}
       <div className="tabs">
@@ -68,13 +158,37 @@ export default function Home() {
         >
           🍔 Makanan & Minuman (Food)
         </div>
+        <div 
+          className={`tab ${category === 'fashion' ? 'active' : ''}`}
+          onClick={() => { setCategory('fashion'); setSearch(''); }}
+        >
+          👗 Fashion
+        </div>
+        <div 
+          className={`tab ${category === 'entertainment' ? 'active' : ''}`}
+          onClick={() => { setCategory('entertainment'); setSearch(''); }}
+        >
+          🎭 Hiburan (Entertainment)
+        </div>
+        <div 
+          className={`tab ${category === 'event' ? 'active' : ''}`}
+          onClick={() => { setCategory('event'); setSearch(''); }}
+        >
+          📅 Pameran & Event
+        </div>
       </div>
 
       {/* Search */}
       <input 
         type="text" 
         className="search-box"
-        placeholder={`Cari promo ${category === 'flight' ? 'maskapai, kota, rute' : 'brand, kategori kuliner'}...`}
+        placeholder={`Cari promo ${
+          category === 'flight' ? 'maskapai, kota, rute' :
+          category === 'food' ? 'restoran, makanan, brand kuliner' :
+          category === 'fashion' ? 'brand pakaian, sepatu, tas' :
+          category === 'entertainment' ? 'bioskop, tiket nonton, rekreasi' :
+          'nama pameran, bazaar, expo'
+        }...`}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />

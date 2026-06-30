@@ -85,12 +85,19 @@ def run_scraping_job(db_path="promo.db", use_mock_source=True):
                     if os.environ.get("GEMINI_API_KEY"):
                         print("Attempting to parse with Gemini AI...")
                         parsed = parse_with_gemini(article_text, category=source["category"])
+                        if parsed and not parsed.get("is_promo"):
+                            print(f"Skipping article (Gemini determined not a promo): {title}")
+                            continue
                         
                     if not parsed:
                         print("Fallback: Parsing with local Regex Parser...")
                         parsed = parse_promo_text(article_text, category=source["category"])
+                        # Allow event category to bypass the promo code / discount requirement
+                        if parsed and parsed.get("category") != "event" and not parsed.get("promo_code") and not parsed.get("discount_value"):
+                            print(f"Skipping article (Local Regex determined not a promo): {title}")
+                            continue
                         
-                    if parsed is None:
+                    if not parsed:
                         print(f"No promo content found in article: {title}")
                         continue
                         
@@ -144,7 +151,14 @@ def _run_mock_scraping_job(db_path):
                 print(f"Error: {e}")
 
 if __name__ == "__main__":
+    import sys
     # Inisialisasi database lokal jika dijalankan mandiri
     from db.init_db import init_database
     init_database()
-    run_scraping_job()
+    
+    use_mock = True
+    if "--real" in sys.argv:
+        use_mock = False
+        
+    run_scraping_job(use_mock_source=use_mock)
+

@@ -17,7 +17,9 @@ export default function PromoCard({ promo, category }) {
   const subLabel = isFlight ? promo.airline : promo.brand_name;
   const detailRoute = isFlight 
     ? `${promo.origin_city || 'Jakarta'} ➔ ${promo.destination_city || 'Bali'}` 
-    : `Min: ${promo.min_transaction || 'Tidak ada minimum'}`;
+    : promo.locations && promo.locations !== 'Nasional'
+      ? `Lokasi: ${promo.locations}`
+      : `Min: ${promo.min_transaction || 'Tidak ada minimum'}`;
 
   return (
     <div className="card">
