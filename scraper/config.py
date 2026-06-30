@@ -24,7 +24,19 @@ FEED_SOURCES = [
         "url": "https://jadwalevent.web.id/feed",
         "category": "event",
         "selector": ".entry-content, article.post, .post-content"
-    }
+    },
+    {
+        "name": "Female Daily Fashion",
+        "url": "https://femaledaily.com/feed",
+        "category": "fashion",
+        "selector": ".entry-content, .post-content, article"
+    },
+    {
+        "name": "Detik Hot",
+        "url": "https://rss.detik.com/index.php/hot",
+        "category": "entertainment",
+        "selector": "article.detail, .detail__body-text"
+    },
 ]
 
 PORTAL_SOURCES = [
