@@ -26,3 +26,36 @@ FEED_SOURCES = [
         "selector": ".entry-content, article.post, .post-content"
     }
 ]
+
+PORTAL_SOURCES = [
+    {
+        "name": "Traveloka Promo",
+        "url": "https://www.traveloka.com/id-id/promotion",
+        "category": "flight",
+        "selector": "a[data-testid='promotion-card'], .promotion-card, article.promo",
+    },
+    {
+        "name": "Tiket.com Deals",
+        "url": "https://www.tiket.com/promo",
+        "category": "flight",
+        "selector": ".promo-card, .deal-card, article.promo-item",
+    },
+    {
+        "name": "Zalora Sale",
+        "url": "https://www.zalora.co.id/sale/",
+        "category": "fashion",
+        "selector": ".catalogue__list article, .product-card, .promo-item",
+    },
+    {
+        "name": "Loket Event",
+        "url": "https://www.loket.com/event",
+        "category": "event",
+        "selector": ".event-card, .event-item, article.event",
+    },
+    {
+        "name": "GoFood Promo",
+        "url": "https://gofood.co.id/jakarta/promo",
+        "category": "food",
+        "selector": ".promo-card, .promotion-card, article.promo",
+    },
+]
