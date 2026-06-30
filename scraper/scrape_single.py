@@ -49,11 +49,11 @@ def scrape_single_url_with_text(url, text, title=None, db_path="promo.db"):
         })
         
         # Save to DB
+        parsed["category"] = category
+        if not parsed.get("brand_name") and parsed.get("airline"):
+            parsed["brand_name"] = parsed["airline"]
         with DatabaseManager(db_path) as db_mgr:
-            if category == "flight":
-                db_mgr.insert_flight_promo(parsed)
-            else:
-                db_mgr.insert_food_promo(parsed)
+            db_mgr.insert_promo(parsed)
                 
         return {"success": True, "data": parsed}
     except Exception as e:

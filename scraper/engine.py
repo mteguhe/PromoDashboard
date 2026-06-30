@@ -57,13 +57,7 @@ def run_scraping_job(db_path="promo.db", use_mock_source=True):
                     title = entry["title"]
                     
                     # Cek apakah URL sudah pernah di-scrape (Deduplikasi awal)
-                    cursor = db_mgr.conn.cursor()
-                    if source["category"] == "flight":
-                        cursor.execute("SELECT id FROM flight_promos WHERE source_url=?", (url,))
-                    else:
-                        cursor.execute("SELECT id FROM food_promos WHERE source_url=?", (url,))
-                        
-                    if cursor.fetchone():
+                    if db_mgr.url_exists(url):
                         # Sudah pernah diproses, lewati
                         continue
                         
@@ -110,10 +104,10 @@ def run_scraping_job(db_path="promo.db", use_mock_source=True):
                     })
                     
                     # 5. Simpan ke Database
-                    if source["category"] == "flight":
-                        db_mgr.insert_flight_promo(parsed)
-                    else:
-                        db_mgr.insert_food_promo(parsed)
+                    parsed["category"] = source["category"]
+                    if not parsed.get("brand_name") and parsed.get("airline"):
+                        parsed["brand_name"] = parsed["airline"]
+                    db_mgr.insert_promo(parsed)
                 except Exception as e:
                     entry_title = entry.get("title", "Unknown Title") if isinstance(entry, dict) else "Unknown Title"
                     entry_url = entry.get("link", "Unknown URL") if isinstance(entry, dict) else "Unknown URL"
@@ -132,9 +126,12 @@ def _run_mock_scraping_job(db_path):
                     "title": src["title"],
                     "description": src["text"],
                     "source_platform": src["platform"],
-                    "source_url": src["source_url"]
+                    "source_url": src["source_url"],
+                    "category": "flight"
                 })
-                db_mgr.insert_flight_promo(parsed)
+                if not parsed.get("brand_name") and parsed.get("airline"):
+                    parsed["brand_name"] = parsed["airline"]
+                db_mgr.insert_promo(parsed)
             except Exception as e:
                 print(f"Error: {e}")
         for src in MOCK_FOOD_SOURCES:
@@ -144,9 +141,10 @@ def _run_mock_scraping_job(db_path):
                     "title": src["title"],
                     "description": src["text"],
                     "source_platform": src["platform"],
-                    "source_url": src["source_url"]
+                    "source_url": src["source_url"],
+                    "category": "food"
                 })
-                db_mgr.insert_food_promo(parsed)
+                db_mgr.insert_promo(parsed)
             except Exception as e:
                 print(f"Error: {e}")
 

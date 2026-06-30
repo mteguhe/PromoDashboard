@@ -3,11 +3,10 @@ import { getDbConnection } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
-
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const category = searchParams.get('category') || 'flight'; // flight, food, fashion, event, entertainment
+    const category = searchParams.get('category') || 'flight';
     const validCategories = ['flight', 'food', 'fashion', 'event', 'entertainment'];
     if (!validCategories.includes(category)) {
       return NextResponse.json(
@@ -16,39 +15,17 @@ export async function GET(request) {
       );
     }
     const search = searchParams.get('search') || '';
-    
     const db = await getDbConnection();
-    let promos = [];
 
-    if (category === 'flight') {
-      let query = 'SELECT * FROM flight_promos WHERE 1=1';
-      const params = [];
-      if (search) {
-        query += ' AND (title LIKE ? OR description LIKE ? OR airline LIKE ?)';
-        params.push(`%${search}%`, `%${search}%`, `%${search}%`);
-      }
-      query += ' ORDER BY created_at DESC';
-      promos = await db.all(query, params);
-    } else {
-      let query = 'SELECT * FROM food_promos WHERE 1=1';
-      const params = [];
-      
-      if (category === 'food') {
-        query += ' AND (category = ? OR category = ? OR category IS NULL)';
-        params.push('food', 'F&B');
-      } else {
-        query += ' AND category = ?';
-        params.push(category);
-      }
-
-      if (search) {
-        query += ' AND (title LIKE ? OR description LIKE ? OR brand_name LIKE ?)';
-        params.push(`%${search}%`, `%${search}%`, `%${search}%`);
-      }
-      query += ' ORDER BY created_at DESC';
-      promos = await db.all(query, params);
+    let query = 'SELECT * FROM promos WHERE category = ?';
+    const params = [category];
+    if (search) {
+      query += ' AND (title LIKE ? OR description LIKE ? OR brand_name LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
+    query += ' ORDER BY created_at DESC';
 
+    const promos = await db.all(query, params);
     return NextResponse.json({ success: true, data: promos });
   } catch (error) {
     console.error('API Promos Error:', error);
