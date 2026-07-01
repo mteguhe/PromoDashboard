@@ -1,9 +1,10 @@
 import os
 from scraper.db_manager import DatabaseManager
-from scraper.config import FEED_SOURCES, PORTAL_SOURCES, SOCIAL_ACCOUNTS
+from scraper.config import FEED_SOURCES, PORTAL_SOURCES, SOCIAL_ACCOUNTS, OTA_SOURCES
 from scraper.adapters.portal_adapter import PortalAdapter
 from scraper.adapters.social_adapter import SocialAdapter
 from scraper.adapters.rss_adapter import RssAdapter
+from scraper.adapters.ota_adapter import OtaAdapter
 from scraper.ai_parser import parse_with_gemini
 from scraper.parser import parse_promo_text
 from scraper.validator import validate_promo
@@ -32,6 +33,7 @@ def run_scraping_job(db_path: str = "promo.db", use_mock_source: bool = False) -
 
     print("Starting Ingestion Engine...")
     adapters = [
+        OtaAdapter(OTA_SOURCES),
         PortalAdapter(PORTAL_SOURCES),
         SocialAdapter(SOCIAL_ACCOUNTS),
         RssAdapter(FEED_SOURCES),

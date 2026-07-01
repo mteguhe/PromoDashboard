@@ -72,6 +72,59 @@ PORTAL_SOURCES = [
     },
 ]
 
+OTA_SOURCES = [
+    # Penerbangan — OTA yang terkonfirmasi dapat di-scrape
+    {
+        "name": "Airpaz Promo Penerbangan",
+        "url": "https://www.airpaz.com/en/promo",
+        "category": "flight",
+        "platform": "Airpaz",
+        "selector": "a[href*='/promo/view/']",
+        "wait_ms": 3000,
+    },
+    {
+        "name": "Traveloka Promo Penerbangan",
+        "url": "https://www.traveloka.com/id-id/promotion?productType=FLIGHT",
+        "category": "flight",
+        "platform": "Traveloka",
+        "selector": "a[href*='/id-id/promotion/detail'], a[href*='/promotion/detail']",
+        "wait_ms": 5000,
+    },
+    {
+        "name": "Trip.com Promo Penerbangan",
+        "url": "https://id.trip.com/flights/cheapflights/",
+        "category": "flight",
+        "platform": "Trip.com",
+        "selector": "[class*='FlightCard'], [class*='flight-card'], a[class*='deal'], li[class*='flight']",
+        "wait_ms": 4000,
+    },
+    # Hotel
+    {
+        "name": "Traveloka Promo Hotel",
+        "url": "https://www.traveloka.com/id-id/hotel/promotion",
+        "category": "hotel",
+        "platform": "Traveloka",
+        "selector": "a[href*='/id-id/hotel/promotion/detail'], a[href*='/hotel/promotion/detail']",
+        "wait_ms": 5000,
+    },
+    {
+        "name": "Booking.com Deals Hotel",
+        "url": "https://www.booking.com/deals.html",
+        "category": "hotel",
+        "platform": "Booking.com",
+        "selector": "[data-testid='deal-card'], [class*='DealCard'], article[class*='deal']",
+        "wait_ms": 4000,
+    },
+    {
+        "name": "Agoda Last Minute Hotel",
+        "url": "https://www.agoda.com/id-id/deals/hotel",
+        "category": "hotel",
+        "platform": "Agoda",
+        "selector": "[data-selenium='hotel-item'], [class*='PropertyCard'], li[class*='hotel']",
+        "wait_ms": 5000,
+    },
+]
+
 SOCIAL_ACCOUNTS = [
     {
         "name": "Traveloka",

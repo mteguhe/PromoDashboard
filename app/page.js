@@ -170,11 +170,17 @@ export default function Home() {
         >
           🎭 Hiburan (Entertainment)
         </div>
-        <div 
+        <div
           className={`tab ${category === 'event' ? 'active' : ''}`}
           onClick={() => { setCategory('event'); setSearch(''); }}
         >
           📅 Pameran & Event
+        </div>
+        <div
+          className={`tab ${category === 'hotel' ? 'active' : ''}`}
+          onClick={() => { setCategory('hotel'); setSearch(''); }}
+        >
+          🏨 Hotel
         </div>
       </div>
 
@@ -187,6 +193,7 @@ export default function Home() {
           category === 'food' ? 'restoran, makanan, brand kuliner' :
           category === 'fashion' ? 'brand pakaian, sepatu, tas' :
           category === 'entertainment' ? 'bioskop, tiket nonton, rekreasi' :
+          category === 'hotel' ? 'nama hotel, kota, bintang' :
           'nama pameran, bazaar, expo'
         }...`}
         value={search}

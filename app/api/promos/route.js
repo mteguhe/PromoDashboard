@@ -7,7 +7,7 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category') || 'flight';
-    const validCategories = ['flight', 'food', 'fashion', 'event', 'entertainment'];
+    const validCategories = ['flight', 'food', 'fashion', 'event', 'entertainment', 'hotel'];
     if (!validCategories.includes(category)) {
       return NextResponse.json(
         { success: false, error: `Invalid category. Must be one of: ${validCategories.join(', ')}` },
