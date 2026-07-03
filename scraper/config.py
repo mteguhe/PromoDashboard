@@ -126,9 +126,18 @@ OTA_SOURCES = [
 ]
 
 SOCIAL_ACCOUNTS = [
+    # Flight promo hunters — confirmed accessible without login
     {
         "name": "thepromohunter2",
         "url": "https://www.threads.com/@thepromohunter2",
+        "category": "flight",
+        "platform": "threads",
+        "selector": "[data-pressable-container]",
+    },
+    # Airlines on Threads — accessible, may post flight deals
+    {
+        "name": "Citilink",
+        "url": "https://www.threads.com/@citilink",
         "category": "flight",
         "platform": "threads",
         "selector": "[data-pressable-container]",
@@ -140,6 +149,7 @@ SOCIAL_ACCOUNTS = [
         "platform": "threads",
         "selector": "[data-pressable-container]",
     },
+    # Food & fashion
     {
         "name": "Shopee Indonesia",
         "url": "https://www.threads.com/@shopee_id",

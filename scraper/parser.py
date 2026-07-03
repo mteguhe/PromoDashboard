@@ -46,6 +46,20 @@ def parse_promo_text(text, category="flight"):
             text,
             re.IGNORECASE
         )
+    # International English price format: "IDR 500K OFF", "USD 20 off", "up to 50% off"
+    if not discount_pattern:
+        discount_pattern = re.search(
+            r"(?:IDR|USD|SGD|MYR)\s*(\d+(?:[.,]\d+)?(?:K|M)?)\s*(?:off|discount)|up\s*to\s*(\d+%)\s*off|(\d+%)\s*off",
+            text,
+            re.IGNORECASE
+        )
+    # BOGO / Gratis promo: "Beli 1 Gratis 1", "Buy 1 Get 1", "Gratis 1 cup"
+    if not discount_pattern:
+        discount_pattern = re.search(
+            r"(beli\s*\d+\s*gratis\s*\d+|buy\s*\d+\s*get\s*\d+(?:\s*free)?|gratis\s+\d+|free\s+\d+)",
+            text,
+            re.IGNORECASE
+        )
     
     # Contextual Expiry Date Extraction
     date_match = re.search(r'(?:hingga|s\.?d\.?|sampai|berlaku|expired|exp)\s*(?:tanggal\s*)?(\d{4}-\d{2}-\d{2})', text, re.IGNORECASE)
