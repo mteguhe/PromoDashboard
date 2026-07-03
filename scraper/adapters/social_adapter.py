@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
 from playwright_stealth import Stealth
 from scraper.adapters.base import BaseAdapter
+from scraper.threads_session import ensure_logged_in
 
 _HEADERS = {
     "User-Agent": (
@@ -59,6 +60,13 @@ class SocialAdapter(BaseAdapter):
                 )
                 page = ctx.new_page()
                 _STEALTH.apply_stealth_sync(page)
+
+                # Try to log in — unlocks all public accounts on Threads
+                logged_in = ensure_logged_in(page, ctx)
+                if logged_in:
+                    print(f"[SocialAdapter] Threads: logged in — scraping {len(accounts)} accounts")
+                else:
+                    print(f"[SocialAdapter] Threads: anonymous — some accounts may be inaccessible")
 
                 for account in accounts:
                     try:

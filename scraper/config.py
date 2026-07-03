@@ -126,7 +126,7 @@ OTA_SOURCES = [
 ]
 
 SOCIAL_ACCOUNTS = [
-    # Flight promo hunters — confirmed accessible without login
+    # ── Flight: promo hunters ────────────────────────────────────────────────
     {
         "name": "thepromohunter2",
         "url": "https://www.threads.com/@thepromohunter2",
@@ -134,7 +134,21 @@ SOCIAL_ACCOUNTS = [
         "platform": "threads",
         "selector": "[data-pressable-container]",
     },
-    # Airlines on Threads — accessible, may post flight deals
+    # ── Flight: OTA & airlines ───────────────────────────────────────────────
+    {
+        "name": "Traveloka",
+        "url": "https://www.threads.com/@traveloka",
+        "category": "flight",
+        "platform": "threads",
+        "selector": "[data-pressable-container]",
+    },
+    {
+        "name": "Tiket.com",
+        "url": "https://www.threads.com/@tiket.com",
+        "category": "flight",
+        "platform": "threads",
+        "selector": "[data-pressable-container]",
+    },
     {
         "name": "Citilink",
         "url": "https://www.threads.com/@citilink",
@@ -143,13 +157,56 @@ SOCIAL_ACCOUNTS = [
         "selector": "[data-pressable-container]",
     },
     {
-        "name": "Traveloka",
-        "url": "https://www.threads.com/@traveloka",
+        "name": "AirAsia Indonesia",
+        "url": "https://www.threads.com/@airasiaid",
         "category": "flight",
         "platform": "threads",
         "selector": "[data-pressable-container]",
     },
-    # Food & fashion
+    {
+        "name": "Lion Air",
+        "url": "https://www.threads.com/@lionairidn",
+        "category": "flight",
+        "platform": "threads",
+        "selector": "[data-pressable-container]",
+    },
+    {
+        "name": "Garuda Indonesia",
+        "url": "https://www.threads.com/@garudaindonesia",
+        "category": "flight",
+        "platform": "threads",
+        "selector": "[data-pressable-container]",
+    },
+    # ── Hotel ────────────────────────────────────────────────────────────────
+    {
+        "name": "Agoda",
+        "url": "https://www.threads.com/@agoda",
+        "category": "hotel",
+        "platform": "threads",
+        "selector": "[data-pressable-container]",
+    },
+    {
+        "name": "Booking.com Indonesia",
+        "url": "https://www.threads.com/@bookingcom",
+        "category": "hotel",
+        "platform": "threads",
+        "selector": "[data-pressable-container]",
+    },
+    {
+        "name": "RedDoorz",
+        "url": "https://www.threads.com/@reddoorz",
+        "category": "hotel",
+        "platform": "threads",
+        "selector": "[data-pressable-container]",
+    },
+    {
+        "name": "OYO Indonesia",
+        "url": "https://www.threads.com/@oyoindonesia",
+        "category": "hotel",
+        "platform": "threads",
+        "selector": "[data-pressable-container]",
+    },
+    # ── Food ─────────────────────────────────────────────────────────────────
     {
         "name": "Shopee Indonesia",
         "url": "https://www.threads.com/@shopee_id",
@@ -158,8 +215,23 @@ SOCIAL_ACCOUNTS = [
         "selector": "[data-pressable-container]",
     },
     {
+        "name": "GoFood",
+        "url": "https://www.threads.com/@gofood.id",
+        "category": "food",
+        "platform": "threads",
+        "selector": "[data-pressable-container]",
+    },
+    # ── Fashion ──────────────────────────────────────────────────────────────
+    {
         "name": "Zalora Indonesia",
         "url": "https://www.threads.com/@zaloraid",
+        "category": "fashion",
+        "platform": "threads",
+        "selector": "[data-pressable-container]",
+    },
+    {
+        "name": "H&M Indonesia",
+        "url": "https://www.threads.com/@hm_id",
         "category": "fashion",
         "platform": "threads",
         "selector": "[data-pressable-container]",

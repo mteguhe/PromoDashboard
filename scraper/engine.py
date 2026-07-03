@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+load_dotenv()
+
 from scraper.db_manager import DatabaseManager
 from scraper.config import FEED_SOURCES, PORTAL_SOURCES, SOCIAL_ACCOUNTS, OTA_SOURCES
 from scraper.adapters.portal_adapter import PortalAdapter

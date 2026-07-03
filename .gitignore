@@ -9,6 +9,10 @@ node_modules/
 
 # local env files
 .env*.local
+.env
+
+# Threads session (contains auth cookies — never commit)
+threads_session.json
 
 # OS junk
 .DS_Store
