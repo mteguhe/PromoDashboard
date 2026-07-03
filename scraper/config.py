@@ -127,31 +127,31 @@ OTA_SOURCES = [
 
 SOCIAL_ACCOUNTS = [
     {
-        "name": "Traveloka",
-        "url": "https://www.threads.net/@traveloka",
+        "name": "thepromohunter2",
+        "url": "https://www.threads.com/@thepromohunter2",
         "category": "flight",
         "platform": "threads",
-        "selector": "article, [data-pressable-container], .x9f619",
+        "selector": "[data-pressable-container]",
+    },
+    {
+        "name": "Traveloka",
+        "url": "https://www.threads.com/@traveloka",
+        "category": "flight",
+        "platform": "threads",
+        "selector": "[data-pressable-container]",
     },
     {
         "name": "Shopee Indonesia",
-        "url": "https://www.threads.net/@shopee_id",
+        "url": "https://www.threads.com/@shopee_id",
         "category": "food",
         "platform": "threads",
-        "selector": "article, [data-pressable-container]",
+        "selector": "[data-pressable-container]",
     },
     {
         "name": "Zalora Indonesia",
-        "url": "https://www.threads.net/@zaloraid",
+        "url": "https://www.threads.com/@zaloraid",
         "category": "fashion",
         "platform": "threads",
-        "selector": "article, [data-pressable-container]",
-    },
-    {
-        "name": "Loket",
-        "url": "https://www.threads.net/@loket.com",
-        "category": "event",
-        "platform": "threads",
-        "selector": "article, [data-pressable-container]",
+        "selector": "[data-pressable-container]",
     },
 ]
