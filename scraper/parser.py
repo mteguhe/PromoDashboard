@@ -39,6 +39,13 @@ def parse_promo_text(text, category="flight"):
         text,
         re.IGNORECASE
     )
+    # Indonesian price shorthand for flight promos: "990ribu", "3juta", "1,4juta", "PP 3jutaan"
+    if not discount_pattern:
+        discount_pattern = re.search(
+            r"(?:Rp\.?\s*)?\b(\d+(?:[,.]\d+)?\s*(?:juta(?:an)?|ribu|rb))\b",
+            text,
+            re.IGNORECASE
+        )
     
     # Contextual Expiry Date Extraction
     date_match = re.search(r'(?:hingga|s\.?d\.?|sampai|berlaku|expired|exp)\s*(?:tanggal\s*)?(\d{4}-\d{2}-\d{2})', text, re.IGNORECASE)
